@@ -55,10 +55,11 @@ function App() {
   }
 
   // 取得產品
-  const getProducts = async () => {
+  const getProducts = async (page=1) => {
     try {
-      const res = await axios.get(`${baseUrl}/api/${apiPath}/admin/products`);
+      const res = await axios.get(`${baseUrl}/api/${apiPath}/admin/products?page=${page}`);
       setProducts(res.data.products);
+      setPageInfo(res.data.pagination);
     } catch (error) {
       alert(error.response.data.message);
     }
@@ -80,13 +81,13 @@ function App() {
     }
   }
   // 自動檢查是否已登入
-  useEffect(()=>{
+  useEffect(() => {
     const token = document.cookie.replace(
       // eslint-disable-next-line no-useless-escape
       /(?:(?:^|.*;\s*)hexToken\s*\=\s*([^;]*).*$)|^.*$/,
       "$1",
     );
-    if(!token){
+    if (!token) {
       return;
     }
     axios.defaults.headers.common['Authorization'] = token;
@@ -96,26 +97,26 @@ function App() {
   const productModalRef = useRef(null);
   const modalRef = useRef(null);
   // 新增編輯產品modal 渲染後才能取得DOM
-  useEffect(()=>{
+  useEffect(() => {
     modalRef.current = new Modal(productModalRef.current);
   }, [])
-  
+
   // modal狀態為新增or編輯
   const [modalState, setModalState] = useState(null);
-  
+
   // 開啟modal，點編輯的話則帶入產品原先內容
-  const openModal = (mod, product) =>{
+  const openModal = (mod, product) => {
     setModalState(mod);
-    if(mod === "add"){
+    if (mod === "add") {
       setTempProduct(defaultModalState);
-    }else if(mod === "edit"){
+    } else if (mod === "edit") {
       setTempProduct(product);
     }
     modalRef.current.show();
   }
 
   // 關閉modal
-  const closeModal = () =>{
+  const closeModal = () => {
     modalRef.current.hide();
   }
 
@@ -123,7 +124,7 @@ function App() {
   const [tempProduct, setTempProduct] = useState(defaultModalState);
 
   // 撰寫產品modal (需確認name的type是否為checkbox)
-  const handleProductContent = (e) =>{
+  const handleProductContent = (e) => {
     const { name, value, checked, type } = e.target;
     setTempProduct({
       ...tempProduct,
@@ -134,23 +135,23 @@ function App() {
   // 刪除modal
   const deleteProductModalRef = useRef(null);
   const deleteModalRef = useRef(null);
-  useEffect(()=>{
+  useEffect(() => {
     deleteModalRef.current = new Modal(deleteProductModalRef.current);
   }, [])
 
   // 開啟刪除modal
-  const openDeleteModal = (product) =>{
+  const openDeleteModal = (product) => {
     setTempProduct(product);
     deleteModalRef.current.show();
   };
 
   // 關閉刪除modal
-  const closeDeleteModal = () =>{
+  const closeDeleteModal = () => {
     deleteModalRef.current.hide();
   };
 
   // 調整副圖
-  const handleImageChange = (e, index) =>{
+  const handleImageChange = (e, index) => {
     const { value } = e.target;
     const newImages = [...tempProduct.imagesUrl];
     newImages[index] = value;
@@ -161,7 +162,7 @@ function App() {
   };
 
   // 新增附圖button
-  const handleAddImages = () =>{
+  const handleAddImages = () => {
     const newImages = [...tempProduct.imagesUrl];
     newImages.push("");
     setTempProduct({
@@ -171,7 +172,7 @@ function App() {
   };
 
   //刪除副圖button
-  const handleRemoveImages = () =>{
+  const handleRemoveImages = () => {
     const newImages = [...tempProduct.imagesUrl];
     newImages.pop();
     setTempProduct({
@@ -181,10 +182,10 @@ function App() {
   };
 
   // 新增產品
-  const addNewProduct = async() =>{
+  const addNewProduct = async () => {
     try {
       const productData = {
-        data:{
+        data: {
           ...tempProduct,
           origin_price: Number(tempProduct.origin_price),
           price: Number(tempProduct.price),
@@ -199,10 +200,10 @@ function App() {
   };
 
   // 修改產品
-  const adjustProduct = async() =>{
+  const adjustProduct = async () => {
     try {
       const productData = {
-        data:{
+        data: {
           ...tempProduct,
           origin_price: Number(tempProduct.origin_price),
           price: Number(tempProduct.price),
@@ -218,7 +219,7 @@ function App() {
 
   // 送出新增產品
   // 使用modalState狀態判斷該送出新增or編輯HTTP請求
-  const handleUpdateProduct = async() =>{
+  const handleUpdateProduct = async () => {
     const apiCall = modalState === "add" ? addNewProduct : adjustProduct;
     try {
       await apiCall();
@@ -230,7 +231,7 @@ function App() {
   };
 
   // 刪除產品
-  const deleteProduct = async() =>{
+  const deleteProduct = async () => {
     try {
       await axios.delete(`${baseUrl}/api/${apiPath}/admin/product/${tempProduct.id}`)
       closeDeleteModal();
@@ -240,6 +241,32 @@ function App() {
     }
   };
 
+  // 頁面狀態
+  const [pageInfo, setPageInfo] = useState({});
+
+  // 切換頁面
+  const handlePageChange = async(page=1) => {
+    getProducts(page)
+  }
+
+  // 圖片上傳
+  const handleUploadImage =async(e)=>{
+    console.log(e.target.files[0]);
+    const file = e.target.files[0];
+    const formData = new FormData();
+    formData.append("file-to-upload", file);
+    try {
+      const res = await axios.post(`${baseUrl}/api/${apiPath}/admin/upload`, formData);
+      const uploadedUrl = res.data.imageUrl;
+      setTempProduct({
+        ...tempProduct,
+        imageUrl: uploadedUrl
+      })
+    } catch (error) {
+      console.log(error)
+    }
+  }
+
   return (
     <>
       {isAuth ?
@@ -248,7 +275,7 @@ function App() {
             <div className="col">
               <div className="d-flex justify-content-between">
                 <h2>產品列表</h2>
-                <button type="button" className="btn btn-primary" onClick={()=>{openModal("add")}}>新增產品</button>
+                <button type="button" className="btn btn-primary" onClick={() => { openModal("add") }}>新增產品</button>
               </div>
               <table className="table">
                 <thead>
@@ -266,11 +293,11 @@ function App() {
                       <th scope="row">{product.title}</th>
                       <td>{product.origin_price}</td>
                       <td>{product.price}</td>
-                      <td>{product.is_enabled ? <span style={{color: "green"}}>已啟用</span> : "未啟用 "}</td>
+                      <td>{product.is_enabled ? <span style={{ color: "green" }}>已啟用</span> : "未啟用 "}</td>
                       <td>
                         <div className="btn-group">
-                          <button type="button" className="btn btn-outline-primary btn-sm" onClick={()=>{openModal("edit", product)}} >編輯</button>
-                          <button type="button" className="btn btn-outline-danger btn-sm" onClick={()=>openDeleteModal(product)}>刪除</button>
+                          <button type="button" className="btn btn-outline-primary btn-sm" onClick={() => { openModal("edit", product) }} >編輯</button>
+                          <button type="button" className="btn btn-outline-danger btn-sm" onClick={() => openDeleteModal(product)}>刪除</button>
                         </div>
                       </td>
                     </tr>
@@ -278,6 +305,31 @@ function App() {
                 </tbody>
               </table>
             </div>
+          </div>
+          <div className="d-flex justify-content-center">
+            <nav>
+              <ul className="pagination">
+                <li className={`page-item ${!pageInfo.has_pre && "disabled"}`}>
+                  <a className="page-link" href="#" onClick={()=>handlePageChange(pageInfo.current_page - 1)}>
+                    上一頁
+                  </a>
+                </li>
+                {
+                  Array.from({ length: pageInfo.total_pages }).map((_, index) => (
+                    <li className={`page-item ${pageInfo.current_page === index +1 && "active"}`} key={index}>
+                      <a className="page-link" href="#" onClick={()=>handlePageChange(index + 1)}>
+                        {index + 1}
+                      </a>
+                    </li>)
+                  )
+                }
+                <li className={`page-item ${!pageInfo.has_next && "disabled"}`}>
+                  <a className="page-link" href="#" onClick={()=>handlePageChange(pageInfo.current_page + 1)}>
+                    下一頁
+                  </a>
+                </li>
+              </ul>
+            </nav>
           </div>
         </div> :
         <div className="d-flex flex-column justify-content-center align-items-center vh-100">
@@ -300,12 +352,22 @@ function App() {
         <div className="modal-dialog modal-dialog-centered modal-xl">
           <div className="modal-content border-0 shadow">
             <div className="modal-header border-bottom">
-              <h5 className="modal-title fs-4">{modalState==="add"? "新增產品" : "編輯產品"}</h5>
+              <h5 className="modal-title fs-4">{modalState === "add" ? "新增產品" : "編輯產品"}</h5>
               <button type="button" className="btn-close" aria-label="Close" onClick={closeModal}></button>
             </div>
             <div className="modal-body p-4">
               <div className="row g-4">
                 <div className="col-md-4">
+                  <div className="mb-5">
+                    <label htmlFor="fileInput" className="form-label"> 圖片上傳 </label>
+                    <input
+                      type="file"
+                      accept=".jpg,.jpeg,.png"
+                      className="form-control"
+                      id="fileInput"
+                      onChange={handleUploadImage}
+                    />
+                  </div>
                   <div className="mb-4">
                     <label htmlFor="primary-image" className="form-label">
                       主圖
@@ -343,7 +405,7 @@ function App() {
                           placeholder={`圖片網址 ${index + 1}`}
                           className="form-control mb-2"
                           value={image}
-                          onChange={(e)=>handleImageChange(e, index)}
+                          onChange={(e) => handleImageChange(e, index)}
                         />
                         {image && (
                           <img
@@ -355,7 +417,7 @@ function App() {
                       </div>
                     ))}
                     <div className="btn-group w-100">
-                      {tempProduct.imagesUrl.length < 5 && tempProduct.imagesUrl[tempProduct.imagesUrl.length-1] !=="" && (<button className="btn btn-outline-primary btn-sm w-100" onClick={handleAddImages}>新增圖片</button>)}
+                      {tempProduct.imagesUrl.length < 5 && tempProduct.imagesUrl[tempProduct.imagesUrl.length - 1] !== "" && (<button className="btn btn-outline-primary btn-sm w-100" onClick={handleAddImages}>新增圖片</button>)}
                       {tempProduct.imagesUrl.length > 1 && (<button className="btn btn-outline-danger btn-sm w-100" onClick={handleRemoveImages} >取消圖片</button>)}
                     </div>
                   </div>
@@ -516,7 +578,7 @@ function App() {
               ></button>
             </div>
             <div className="modal-body">
-              你是否要刪除 
+              你是否要刪除
               <span className="text-danger fw-bold">{tempProduct.title}</span>
             </div>
             <div className="modal-footer">
