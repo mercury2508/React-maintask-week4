@@ -194,6 +194,7 @@ function App() {
       }
       await axios.post(`${baseUrl}/api/${apiPath}/admin/product`, productData)
       alert("新增產品成功");
+      closeModal();
     } catch (error) {
       alert(`欄位尚未填寫:${error.response.data.message}`);
     }
@@ -212,8 +213,10 @@ function App() {
       }
       await axios.put(`${baseUrl}/api/${apiPath}/admin/product/${tempProduct.id}`, productData)
       alert("已編輯產品");
+      closeModal();
     } catch (error) {
       alert(error);
+      console.log(error);
     }
   };
 
@@ -224,7 +227,6 @@ function App() {
     try {
       await apiCall();
       getProducts();
-      closeModal();
     } catch (error) {
       alert(error);
     }
@@ -480,6 +482,7 @@ function App() {
                         type="number"
                         className="form-control"
                         placeholder="請輸入原價"
+                        min="0"
                         value={tempProduct.origin_price}
                         onChange={handleProductContent}
                       />
@@ -494,6 +497,7 @@ function App() {
                         type="number"
                         className="form-control"
                         placeholder="請輸入售價"
+                        min="0"
                         value={tempProduct.price}
                         onChange={handleProductContent}
                       />
