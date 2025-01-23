@@ -4,7 +4,7 @@ import { useEffect, useRef } from "react";
 const baseUrl = import.meta.env.VITE_BASE_URL;
 const apiPath = import.meta.env.VITE_API_PATH;
 
-function DeleteProductModal({isDeleteProductModalOpen, tempProduct, getProducts}){
+function DeleteProductModal({isDeleteProductModalOpen, setIsDeleteProductModalOpen, tempProduct, getProducts}){
     
     // 刪除modal
     const deleteProductModalRef = useRef(null);
@@ -23,6 +23,7 @@ function DeleteProductModal({isDeleteProductModalOpen, tempProduct, getProducts}
     // 關閉刪除modal
     const closeDeleteModal = () => {
         deleteModalRef.current.hide();
+        setIsDeleteProductModalOpen(false);
     };
 
     // 刪除產品
