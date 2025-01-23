@@ -10,7 +10,7 @@ function DeleteProductModal({isDeleteProductModalOpen, setIsDeleteProductModalOp
     const deleteProductModalRef = useRef(null);
     const deleteModalRef = useRef(null);
     useEffect(() => {
-    deleteModalRef.current = new Modal(deleteProductModalRef.current);
+    deleteModalRef.current = new Modal(deleteProductModalRef.current, {backdrop: false});
     }, []);
 
     // 控制刪除modal開關
@@ -30,6 +30,7 @@ function DeleteProductModal({isDeleteProductModalOpen, setIsDeleteProductModalOp
     const deleteProduct = async () => {
         try {
         await axios.delete(`${baseUrl}/api/${apiPath}/admin/product/${tempProduct.id}`)
+        alert("產品已刪除")
         closeDeleteModal();
         getProducts();
         } catch (error) {

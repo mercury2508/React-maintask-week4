@@ -10,7 +10,7 @@ function ProductModal({isProductModalOpen, setIsProductModalOpen, modalState, te
     const productModalRef = useRef(null);
     const modalRef = useRef(null);
     useEffect(() => {
-      modalRef.current = new Modal(productModalRef.current);
+      modalRef.current = new Modal(productModalRef.current, {backdrop: false});
     }, []);
 
     // 控制產品modal開關
@@ -26,7 +26,7 @@ function ProductModal({isProductModalOpen, setIsProductModalOpen, modalState, te
         setIsProductModalOpen(false);
     };
 
-    // 
+    // 產品資料狀態
     const [modalData, setModalData] = useState(tempProduct);
 
     useEffect(()=>{
@@ -119,6 +119,7 @@ function ProductModal({isProductModalOpen, setIsProductModalOpen, modalState, te
         const apiCall = modalState === "add" ? addNewProduct : adjustProduct;
         try {
         await apiCall();
+        setIsProductModalOpen(false);
         getProducts();
         } catch (error) {
         alert(error);

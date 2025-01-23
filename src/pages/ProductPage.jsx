@@ -82,14 +82,12 @@ function ProductPage({setIsAuth}){
         } else if (mod === "edit") {
         setTempProduct(product);
         }
-        // modalRef.current.show();
         setIsProductModalOpen(true);
     };
 
     // 開啟刪除modal
     const openDeleteModal = (product) => {
         setTempProduct(product);
-        // deleteModalRef.current.show();
         setIsDeleteProductModalOpen(true);
     };
 
